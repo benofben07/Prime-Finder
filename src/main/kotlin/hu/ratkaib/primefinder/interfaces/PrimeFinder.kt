@@ -7,7 +7,7 @@ interface PrimeFinder {
 
      fun startSearch(threadsForSearchCount: Int)
 
-     fun listPrimes(minValue: Long, maxValue: Long): List<Long>
-
      fun stopSearch()
+
+     fun listPrimes(minValue: Long, maxValue: Long): List<Long>
 }
