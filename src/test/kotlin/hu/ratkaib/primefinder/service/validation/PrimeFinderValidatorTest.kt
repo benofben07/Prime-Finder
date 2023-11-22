@@ -24,21 +24,21 @@ import kotlin.test.assertFailsWith
 @OptIn(ExperimentalCoroutinesApi::class)
 class PrimeFinderValidatorTest {
 
-    private val dispatcher = StandardTestDispatcher()
-    private val testScope = TestScope(dispatcher)
-    private val repository: PrimeFinderRepository = mockk()
+    private val testDispatcher = StandardTestDispatcher()
+    private val testScope = TestScope(testDispatcher)
+    private val primeFinderRepository: PrimeFinderRepository = mockk()
 
-    private val validator = PrimeFinderValidator(testScope, repository, 2)
+    private val primeFinderValidator = PrimeFinderValidator(testScope, primeFinderRepository, 2)
 
     @BeforeEach
     fun setUp() {
-        Dispatchers.setMain(dispatcher)
+        Dispatchers.setMain(testDispatcher)
     }
 
     @AfterEach
     fun tearDown() {
         Dispatchers.resetMain()
-        dispatcher.scheduler.runCurrent()
+        testDispatcher.scheduler.runCurrent()
         unmockkAll()
     }
 
@@ -47,7 +47,7 @@ class PrimeFinderValidatorTest {
      */
     @Test
     fun testValidateBeforeSearch() {
-        assertDoesNotThrow { validator.validateBeforeSearch(2) }
+        assertDoesNotThrow { primeFinderValidator.validateBeforeSearch(2) }
     }
 
     /**
@@ -57,7 +57,7 @@ class PrimeFinderValidatorTest {
     @Test
     fun testValidateBeforeStop() {
         val job = createJob()
-        assertDoesNotThrow { validator.validateBeforeStoppingSearch() }
+        assertDoesNotThrow { primeFinderValidator.validateBeforeStoppingSearch() }
         job.complete()
     }
 
@@ -66,8 +66,8 @@ class PrimeFinderValidatorTest {
      */
     @Test
     fun testValidateBeforeListing() {
-        every { repository.findById(2L) } returns Optional.of(PrimeNumber(2))
-        assertDoesNotThrow { validator.validateBeforeListing(1, 2) }
+        every { primeFinderRepository.findById(2L) } returns Optional.of(PrimeNumber(2))
+        assertDoesNotThrow { primeFinderValidator.validateBeforeListing(1, 2) }
     }
 
     /**
@@ -79,7 +79,7 @@ class PrimeFinderValidatorTest {
         assertFailsWith(
             exceptionClass = PrimeFinderException::class,
             message = "No exception thrown with invalid input parameter for search.",
-            block = { validator.validateBeforeSearch(Integer.MAX_VALUE) }
+            block = { primeFinderValidator.validateBeforeSearch(Integer.MAX_VALUE) }
         )
     }
 
@@ -93,7 +93,7 @@ class PrimeFinderValidatorTest {
             exceptionClass = PrimeFinderException::class,
             message = "No exception thrown with invalid input parameter for listing.",
             block = {
-                validator.validateBeforeListing(10, 1)
+                primeFinderValidator.validateBeforeListing(10, 1)
 
             }
         )
@@ -104,12 +104,12 @@ class PrimeFinderValidatorTest {
      */
     @Test
     fun testValidateBeforeListing_InvalidArgument_TooBigInterval() {
-        every { repository.findById(97L) } returns Optional.empty()
+        every { primeFinderRepository.findById(97L) } returns Optional.empty()
         assertFailsWith(
             exceptionClass = PrimeFinderException::class,
             message = "No exception thrown with invalid input parameter for listing.",
             block = {
-                validator.validateBeforeListing(1, 100)
+                primeFinderValidator.validateBeforeListing(1, 100)
 
             }
         )
@@ -125,7 +125,7 @@ class PrimeFinderValidatorTest {
         assertFailsWith(
             exceptionClass = PrimeFinderException::class,
             message = "No exception thrown with invalid state for validation before search.",
-            block = { validator.validateBeforeSearch(1) }
+            block = { primeFinderValidator.validateBeforeSearch(1) }
         )
 
         job.complete()
@@ -140,7 +140,7 @@ class PrimeFinderValidatorTest {
         assertFailsWith(
             exceptionClass = PrimeFinderException::class,
             message = "No exception thrown with invalid state for validation before stopping search.",
-            block = { validator.validateBeforeStoppingSearch() }
+            block = { primeFinderValidator.validateBeforeStoppingSearch() }
         )
     }
 

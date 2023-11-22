@@ -22,23 +22,23 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class PrimeFinderServiceTest {
 
-    private val repository: PrimeFinderRepository = mockk()
-    private val validator: PrimeFinderValidator = mockk()
+    private val primeFinderRepository: PrimeFinderRepository = mockk()
+    private val primeFinderValidator: PrimeFinderValidator = mockk()
 
-    private val dispatcher = StandardTestDispatcher()
-    private val testScope = TestScope(dispatcher)
+    private val testDispatcher = StandardTestDispatcher()
+    private val testScope = TestScope(testDispatcher)
 
-    private val service = PrimeFinderService(testScope, repository, validator, 2)
+    private val primeFinderService = PrimeFinderService(testScope, primeFinderRepository, primeFinderValidator, 2)
 
     @BeforeEach
     fun setUp() {
-        Dispatchers.setMain(dispatcher)
+        Dispatchers.setMain(testDispatcher)
     }
 
     @AfterEach
     fun tearDown() {
         Dispatchers.resetMain()
-        dispatcher.scheduler.runCurrent()
+        testDispatcher.scheduler.runCurrent()
         unmockkAll()
     }
 
@@ -49,18 +49,18 @@ class PrimeFinderServiceTest {
     fun testStart_CoroutineJobsStarted() {
         runTest {
             // GIVEN
-            justRun { validator.validateBeforeSearch(any()) }
-            every { repository.save(any()) } returns PrimeNumber()
-            justRun { repository.saveAll(any() as List<PrimeNumber>) }
-            justRun { repository.deleteAll() }
+            justRun { primeFinderValidator.validateBeforeSearch(any()) }
+            every { primeFinderRepository.save(any()) } returns PrimeNumber()
+            justRun { primeFinderRepository.saveAll(any() as List<PrimeNumber>) }
+            justRun { primeFinderRepository.deleteAll() }
 
             // WHEN
-            service.startSearch(2)
+            primeFinderService.startSearch(2)
 
             // THEN
-            verify(exactly = 1) { validator.validateBeforeSearch(any()) }
-            verify(exactly = 1) { repository.deleteAll() }
-            verify(exactly = 1) { repository.save(any()) }
+            verify(exactly = 1) { primeFinderValidator.validateBeforeSearch(any()) }
+            verify(exactly = 1) { primeFinderRepository.deleteAll() }
+            verify(exactly = 1) { primeFinderRepository.save(any()) }
 
             val jobs = testScope.getJobs()
             assertEquals(2, jobs.size)
@@ -84,17 +84,17 @@ class PrimeFinderServiceTest {
     fun testStop_CoroutineJobsStoppedV2() {
         // GIVEN
         var job: Job? = null
-        justRun { validator.validateBeforeStoppingSearch() }
+        justRun { primeFinderValidator.validateBeforeStoppingSearch() }
         runTest {
             job = Job(testScope.coroutineContext.job)
             assertTrue { job!!.isActive }
 
             // WHEN
-            service.stopSearch()
+            primeFinderService.stopSearch()
         }
 
         //THEN
-        verify(exactly = 1) { validator.validateBeforeStoppingSearch() }
+        verify(exactly = 1) { primeFinderValidator.validateBeforeStoppingSearch() }
         assertNotNull(job)
         assertTrue { job!!.isCancelled }
     }
@@ -105,14 +105,14 @@ class PrimeFinderServiceTest {
     @Test
     fun testListPrimes() {
         // GIVEN
-        justRun { validator.validateBeforeListing(2, 10) }
-        every { repository.findByNumberBetween(2, 10) } returns listOf(2L, 3L, 5L, 7L).map { PrimeNumber(it) }
+        justRun { primeFinderValidator.validateBeforeListing(2, 10) }
+        every { primeFinderRepository.findByNumberBetween(2, 10) } returns listOf(2L, 3L, 5L, 7L).map { PrimeNumber(it) }
 
         // WHEN
-        val response = service.listPrimes(2L, 10L)
+        val response = primeFinderService.listPrimes(2L, 10L)
 
         // THEN
-        verify(exactly = 1) { validator.validateBeforeListing(any(), any()) }
+        verify(exactly = 1) { primeFinderValidator.validateBeforeListing(any(), any()) }
         assertEquals(4, response.size)
         assertThat(response).hasSameElementsAs(listOf(2L, 3L, 5L, 7L))
     }

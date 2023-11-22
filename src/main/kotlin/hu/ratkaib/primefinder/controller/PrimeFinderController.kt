@@ -11,17 +11,17 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api", produces = ["application/json"])
 @Validated
-class PrimeFinderController(private val finder: PrimeFinder) {
+class PrimeFinderController(private val primeFinder: PrimeFinder) {
 
     @PostMapping("/start")
     fun start(@RequestParam @Min(1) threads: Int): ResponseEntity<PrimeNumberResponse> {
-        finder.startSearch(threads)
+        primeFinder.startSearch(threads)
         return createOkResponse("Prime number searching started.")
     }
 
     @PostMapping("/stop")
     fun stop(): ResponseEntity<PrimeNumberResponse> {
-        finder.stopSearch()
+        primeFinder.stopSearch()
         return createOkResponse("Prime number searching stopped.")
     }
 
@@ -30,7 +30,7 @@ class PrimeFinderController(private val finder: PrimeFinder) {
         @RequestParam(name = "min") @Min(1) minValue: Long,
         @RequestParam(name = "max") @Min(1) maxValue: Long
     ): List<Long> {
-        return finder.listPrimes(minValue, maxValue)
+        return primeFinder.listPrimes(minValue, maxValue)
     }
 
     private fun createOkResponse(message: String): ResponseEntity<PrimeNumberResponse> {

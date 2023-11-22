@@ -17,8 +17,8 @@ import org.springframework.validation.annotation.Validated
 @Validated
 class PrimeFinderService(
     private val coroutineScope: CoroutineScope,
-    private val repository: PrimeFinderRepository,
-    private val validator: PrimeFinderValidator,
+    private val primeFinderRepository: PrimeFinderRepository,
+    private val primeFinderValidator: PrimeFinderValidator,
     @Value("\${maxThreadsToUse}") private val maxThreadsToUse: Int = 1
 ) : PrimeFinder {
 
@@ -40,10 +40,10 @@ class PrimeFinderService(
      * coroutine#3: 7 -> 13 -> 19 -> ...
      */
     override fun startSearch(@Min(1) threadsForSearchCount: Int) {
-        validator.validateBeforeSearch(threadsForSearchCount)
+        primeFinderValidator.validateBeforeSearch(threadsForSearchCount)
         resetSearch()
         // 2 is a special even prime number, saving it separately
-        repository.save(PrimeNumber(2L))
+        primeFinderRepository.save(PrimeNumber(2L))
         var i = 1
         (3L..3 + (maxThreadsToUse * 2) step 2).take(threadsForSearchCount).map {
             coroutineScope.launch(CoroutineName("prime-search-${i++}")) {
@@ -55,7 +55,7 @@ class PrimeFinderService(
     }
 
     override fun stopSearch() {
-        validator.validateBeforeStoppingSearch()
+        primeFinderValidator.validateBeforeStoppingSearch()
         val searcherJobs = coroutineScope.getJobs()
         coroutineScope.launch {
             searcherJobs.forEach {
@@ -69,8 +69,8 @@ class PrimeFinderService(
     }
 
     override fun listPrimes(@Min(1) minValue: Long, @Min(1) maxValue: Long): List<Long> {
-        validator.validateBeforeListing(minValue, maxValue)
-        return repository.findByNumberBetween(minValue, maxValue).map { it.number!! }
+        primeFinderValidator.validateBeforeListing(minValue, maxValue)
+        return primeFinderRepository.findByNumberBetween(minValue, maxValue).map { it.number!! }
     }
 
     @PreDestroy
@@ -79,7 +79,7 @@ class PrimeFinderService(
     }
 
     private fun resetSearch() {
-        repository.deleteAll()
+        primeFinderRepository.deleteAll()
     }
 
     /**
@@ -93,7 +93,7 @@ class PrimeFinderService(
         while (true) {
             yield()
             if (isNumberPrime(observedNumber)) {
-                repository.save(PrimeNumber(observedNumber))
+                primeFinderRepository.save(PrimeNumber(observedNumber))
             }
 
             observedNumber += incrementBy * 2

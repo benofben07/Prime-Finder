@@ -24,22 +24,22 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 @Import(PrimeNumberTestConfiguration::class)
 class PrimeFinderServiceIT(
-    @Autowired private val repository: PrimeFinderRepository,
-    @Autowired private val primeFinder: PrimeFinderService,
-    @Autowired private val testScope: CoroutineScope,
-    @Autowired private val dispatcher: TestDispatcher,
+    @Autowired private val primeFinderRepository: PrimeFinderRepository,
+    @Autowired private val primeFinder: PrimeFinder,
+    @Autowired private val coroutineScope: CoroutineScope,
+    @Autowired private val testDispatcher: TestDispatcher,
 ) {
 
     @BeforeEach
     fun setUp() {
-        repository.deleteAll()
-        Dispatchers.setMain(dispatcher)
+        primeFinderRepository.deleteAll()
+        Dispatchers.setMain(testDispatcher)
     }
 
     @AfterEach
     fun tearDown() {
         Dispatchers.resetMain()
-        dispatcher.scheduler.runCurrent()
+        testDispatcher.scheduler.runCurrent()
         unmockkAll()
     }
 
@@ -51,7 +51,7 @@ class PrimeFinderServiceIT(
         assertDoesNotThrow {
             primeFinder.startSearch(1)
         }
-        val jobs = testScope.getJobs()
+        val jobs = coroutineScope.getJobs()
         assertEquals(1, jobs.size)
         val job = jobs[0]
 
@@ -71,7 +71,7 @@ class PrimeFinderServiceIT(
         assertDoesNotThrow {
             primeFinder.startSearch(2)
         }
-        val jobs = testScope.getJobs()
+        val jobs = coroutineScope.getJobs()
         assertEquals(2, jobs.size)
 
         val firstJob = jobs[0]

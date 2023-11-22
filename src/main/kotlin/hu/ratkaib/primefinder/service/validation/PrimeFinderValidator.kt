@@ -17,7 +17,7 @@ import org.springframework.validation.annotation.Validated
 @Validated
 class PrimeFinderValidator(
     private val coroutineScope: CoroutineScope,
-    private val repository: PrimeFinderRepository,
+    private val primeFinderRepository: PrimeFinderRepository,
     @Value("\${maxThreadsToUse}") private val maxThreadsToUse: Int = 1
 ) {
 
@@ -55,7 +55,7 @@ class PrimeFinderValidator(
         }
 
         val closestSmallerOrEqualPrime = findClosestSmallerOrEqualPrime(maxValue)!!
-        val optClosestPrime = repository.findById(closestSmallerOrEqualPrime)
+        val optClosestPrime = primeFinderRepository.findById(closestSmallerOrEqualPrime)
         if (!optClosestPrime.isPresent) {
             throw PrimeFinderException("Searching hasn't finished yet on interval ($minValue) - ($maxValue)!")
         }
