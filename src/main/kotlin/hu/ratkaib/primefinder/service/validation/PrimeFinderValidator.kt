@@ -49,7 +49,7 @@ class PrimeFinderValidator(
      * @throws PrimeFinderException if [minValue] is greater than [maxValue]
      * @throws PrimeFinderException if searching hasn't progressed up to [maxValue] yet
      */
-    fun validateBeforeListing(@Min(1) minValue: Long,@Min(1) maxValue: Long) {
+    fun validateBeforeListing(@Min(1) minValue: Long, @Min(1) maxValue: Long) {
         if (maxValue < minValue) {
             throw PrimeFinderException("Minimum value ($minValue) cannot be bigger than maximum value ($maxValue)!")
         }

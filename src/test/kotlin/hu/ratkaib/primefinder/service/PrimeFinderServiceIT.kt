@@ -1,9 +1,9 @@
 package hu.ratkaib.primefinder.service
 
 
+import hu.ratkaib.primefinder.config.PrimeNumberTestConfiguration
 import hu.ratkaib.primefinder.model.exception.PrimeFinderException
 import hu.ratkaib.primefinder.service.repository.PrimeFinderRepository
-import hu.ratkaib.primefinder.service.validation.PrimeFinderValidator
 import hu.ratkaib.primefinder.util.getJobs
 import io.mockk.unmockkAll
 import kotlinx.coroutines.*
@@ -13,6 +13,7 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -21,15 +22,13 @@ import kotlin.test.assertTrue
 @SpringBootTest
 @ExtendWith(SpringExtension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
+@Import(PrimeNumberTestConfiguration::class)
 class PrimeFinderServiceIT(
     @Autowired private val repository: PrimeFinderRepository,
+    @Autowired private val primeFinder: PrimeFinderService,
+    @Autowired private val testScope: CoroutineScope,
+    @Autowired private val dispatcher: TestDispatcher,
 ) {
-
-    private val dispatcher = StandardTestDispatcher()
-    private val testScope = TestScope(dispatcher)
-
-    private val validator = PrimeFinderValidator(testScope, repository, 2)
-    private val primeFinder = PrimeFinderService(testScope, repository, validator, 2)
 
     @BeforeEach
     fun setUp() {
