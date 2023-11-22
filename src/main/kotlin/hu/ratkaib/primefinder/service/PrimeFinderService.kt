@@ -1,7 +1,7 @@
 package hu.ratkaib.primefinder.service
 
-import hu.ratkaib.primefinder.interfaces.PrimeFinder
 import hu.ratkaib.primefinder.model.PrimeNumber
+import hu.ratkaib.primefinder.service.repository.PrimeFinderRepository
 import hu.ratkaib.primefinder.service.validation.PrimeFinderValidator
 import jakarta.annotation.PreDestroy
 import jakarta.validation.constraints.Min
@@ -22,6 +22,21 @@ class PrimeFinderService(
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
+    /**
+     * Validates parameter then starts searching for prime numbers on given amount of coroutines.
+     * Checks only odd numbers. Since 2 is the only even prime number, saving it manually at the start.
+     * Each coroutine checks a sequence of odd numbers. The difference between two elements are determined by the coroutine count.
+     * Each coroutine receives a starting number which is the next available one after and including 3 (first odd prime number).
+     *
+     *
+     * After checking the observed number if it is prime,
+     * the next one is observed in its sequence until [stopSearch] is called or the application exits.
+     *
+     * In case of 3 coroutines:
+     * coroutine#1: 3 -> 9 -> 15 -> ...
+     * coroutine#2: 5 -> 11 -> 17 -> ...
+     * coroutine#3: 7 -> 13 -> 19 -> ...
+     */
     override fun startSearch(@Min(1) threadsForSearchCount: Int) {
         validator.validateBeforeSearch(threadsForSearchCount)
         resetSearch()
@@ -65,18 +80,31 @@ class PrimeFinderService(
         repository.deleteAll()
     }
 
+    /**
+     * Searches prime numbers in an infinite loop. If a prime number is found it is then saved.
+     *
+     * @param startingNumber number to start searching from.
+     * @param incrementBy increment the currently observed number by this amount to get the next observable number.
+     */
     private suspend fun search(startingNumber: Long, incrementBy: Long) {
-        var i = startingNumber
+        var observedNumber = startingNumber
         while (true) {
             yield()
-            if (isNumberPrime(i)) {
-                repository.save(PrimeNumber(i))
+            if (isNumberPrime(observedNumber)) {
+                repository.save(PrimeNumber(observedNumber))
             }
 
-            i += incrementBy * 2
+            observedNumber += incrementBy * 2
         }
     }
 
+    /**
+     * Checks if a number is prime. Negative numbers are considered non prime and won't be checked.
+     * 1 and 2 are handled as special cases, other numbers will only be checked if they have any odd divider
+     * (between 3 and the observed number's half), since the only prime number that can have an even divider is 2.
+     *
+     * @return true if a number is prime, false otherwise.
+     */
     private fun isNumberPrime(number: Long): Boolean {
         if (number <= 1L) {
             return false

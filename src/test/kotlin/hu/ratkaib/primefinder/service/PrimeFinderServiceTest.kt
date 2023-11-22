@@ -1,132 +1,120 @@
 package hu.ratkaib.primefinder.service
 
-
-import hu.ratkaib.primefinder.interfaces.PrimeFinder
-import hu.ratkaib.primefinder.model.exception.PrimeFinderException
-import kotlinx.coroutines.*
-import kotlinx.coroutines.test.runTest
+import hu.ratkaib.primefinder.model.PrimeNumber
+import hu.ratkaib.primefinder.service.repository.PrimeFinderRepository
+import hu.ratkaib.primefinder.service.validation.PrimeFinderValidator
+import io.mockk.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.job
+import kotlinx.coroutines.test.*
 import org.assertj.core.api.Assertions.assertThat
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.hasItems
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.junit.jupiter.SpringExtension
-import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-@SpringBootTest
-@ExtendWith(SpringExtension::class)
+
 @OptIn(ExperimentalCoroutinesApi::class)
-class PrimeFinderServiceTest(
-    @Autowired val primeFinder: PrimeFinder,
-    @Autowired private val coroutineScope: CoroutineScope,
-    @Autowired private val repository: PrimeFinderRepository
-) {
+class PrimeFinderServiceTest {
+
+    private val repository: PrimeFinderRepository = mockk()
+    private val validator: PrimeFinderValidator = mockk()
+
+    private val dispatcher = StandardTestDispatcher()
+    private val testScope = TestScope(dispatcher)
+
+    private val service = PrimeFinderService(testScope, repository, validator, 2)
 
     @BeforeEach
     fun setUp() {
-        repository.deleteAll()
+        Dispatchers.setMain(dispatcher)
     }
 
-    @Test
-    fun testSearchStartedOnOneThread_ThenStop() {
-        assertDoesNotThrow {
-            primeFinder.startSearch(1)
-        }
-        val jobs = getJobs()
-        assertEquals(1, jobs.size)
-        assertThat(jobs[0].toString().contains("prime-search"))
-        assertDoesNotThrow {
-            primeFinder.stopSearch()
-        }
+    @AfterEach
+    fun tearDown() {
+        Dispatchers.resetMain()
+        dispatcher.scheduler.runCurrent()
+        unmockkAll()
     }
 
+    /**
+     * Tests if jobs have started after calling [PrimeFinderService.startSearch] and they are active.
+     */
     @Test
-    fun testSearchStartedOnTwoThreads_ThenStop() {
-        assertDoesNotThrow {
-            primeFinder.startSearch(2)
-        }
-        val jobs = getJobs()
-        assertEquals(2, jobs.size)
-        assertThat(jobs[0].toString().contains("prime-search"))
-        assertThat(jobs[1].toString().contains("prime-search"))
-        assertDoesNotThrow {
-            primeFinder.stopSearch()
-        }
-    }
-
-    @Test
-    fun testSearchOnInterval_WhileSearchInProgress() {
-        assertDoesNotThrow {
-            primeFinder.startSearch(1)
-        }
-
-        val result = primeFinder.listPrimes(1, 10000)
-        assertTrue { result.size >= 3 }
-        assertThat(result, hasItems(2, 3, 5))
-        assertDoesNotThrow {
-            primeFinder.stopSearch()
-        }
-    }
-
-    @Test
-    fun testSearchOnInterval_AfterSearchIsDone() {
+    fun testStart_CoroutineJobsStarted() {
         runTest {
-            assertDoesNotThrow {
-                primeFinder.startSearch(1)
-            }
+            // GIVEN
+            justRun { validator.validateBeforeSearch(any()) }
+            every { repository.save(any()) } returns PrimeNumber()
+            justRun { repository.saveAll(any() as List<PrimeNumber>) }
+            justRun { repository.deleteAll() }
 
-            assertDoesNotThrow {
-                delay(1L)
-                primeFinder.stopSearch()
-            }
+            // WHEN
+            service.startSearch(2)
 
-            val result = primeFinder.listPrimes(1, 10000)
-            assertTrue { result.size >= 3 }
-            assertThat(result, hasItems(2, 3, 5))
+            // THEN
+            verify(exactly = 1) { validator.validateBeforeSearch(any()) }
+            verify(exactly = 1) { repository.deleteAll() }
+            verify(exactly = 1) { repository.save(any()) }
+
+            val jobs = getJobs()
+            assertEquals(2, jobs.size)
+
+            val firstJob = jobs[0]
+            val secondJob = jobs[1]
+
+            assertThat(firstJob.toString().contains("prime-search"))
+            assertThat(secondJob.toString().contains("prime-search"))
+            assertTrue { firstJob.isActive }
+            assertTrue { secondJob.isActive }
+
+            jobs.forEach { it.cancel() }
         }
     }
 
+    /**
+     * Tests if job has stopped after calling [PrimeFinderService.stopSearch].
+     */
     @Test
-    fun testStartValidationFails_InvalidParameter() {
-        assertThrows<PrimeFinderException> {
-            primeFinder.startSearch(999999)
+    fun testStop_CoroutineJobsStoppedV2() {
+        // GIVEN
+        var job: Job? = null
+        justRun { validator.validateBeforeStoppingSearch() }
+        runTest {
+            job = Job(testScope.coroutineContext.job)
+            assertTrue { job!!.isActive }
+
+            // WHEN
+            service.stopSearch()
         }
+
+        //THEN
+        verify(exactly = 1) { validator.validateBeforeStoppingSearch() }
+        assertNotNull(job)
+        assertTrue { job!!.isCancelled }
     }
 
+    /**
+     * Tests if listing returns found prime numbers correctly after calling [PrimeFinderService.listPrimes].
+     */
     @Test
-    fun testStartValidationFails_SearchIsAlreadyRunning() {
-        assertDoesNotThrow {
-            primeFinder.startSearch(1)
-        }
+    fun testListPrimes() {
+        // GIVEN
+        justRun { validator.validateBeforeListing(2, 10) }
+        every { repository.findByNumberBetween(2, 10) } returns listOf(2L, 3L, 5L, 7L).map { PrimeNumber(it) }
 
-        assertThrows<PrimeFinderException> {
-            primeFinder.startSearch(1)
-        }
+        // WHEN
+        val response = service.listPrimes(2L, 10L)
 
-        assertDoesNotThrow {
-            primeFinder.stopSearch()
-        }
+        // THEN
+        verify(exactly = 1) { validator.validateBeforeListing(any(), any()) }
+        assertEquals(4, response.size)
+        assertThat(response).hasSameElementsAs(listOf(2L, 3L, 5L, 7L))
     }
 
-    @Test
-    fun testStopValidationFails_SearchIsNotRunning() {
-        assertThrows<PrimeFinderException> {
-            primeFinder.stopSearch()
-        }
-    }
-
-    @Test
-    fun testListingValidationFails_InvalidParameter() {
-        assertThrows<PrimeFinderException> {
-            primeFinder.listPrimes(10, 1)
-        }
-    }
-
-    private fun getJobs(): List<Job> = coroutineScope.coroutineContext.job.children.toList()
+    private fun getJobs() = testScope.coroutineContext.job.children.toList()
 }

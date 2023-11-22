@@ -1,7 +1,9 @@
 package hu.ratkaib.primefinder.controller
 
-import hu.ratkaib.primefinder.interfaces.PrimeFinder
+import hu.ratkaib.primefinder.service.PrimeFinder
+import hu.ratkaib.primefinder.model.response.PrimeNumberResponse
 import jakarta.validation.constraints.Min
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
@@ -12,15 +14,15 @@ import org.springframework.web.bind.annotation.*
 class PrimeFinderController(private val finder: PrimeFinder) {
 
     @PostMapping("/start")
-    fun start(@RequestParam @Min(1) threads: Int): ResponseEntity<String> {
+    fun start(@RequestParam @Min(1) threads: Int): ResponseEntity<PrimeNumberResponse> {
         finder.startSearch(threads)
-        return ResponseEntity.ok("Prime number searching started.")
+        return createOkResponse("Prime number searching started.")
     }
 
     @PostMapping("/stop")
-    fun stop(): ResponseEntity<String> {
+    fun stop(): ResponseEntity<PrimeNumberResponse> {
         finder.stopSearch()
-        return ResponseEntity.ok("Prime number searching stopped.")
+        return createOkResponse("Prime number searching stopped.")
     }
 
     @GetMapping("/list")
@@ -29,6 +31,11 @@ class PrimeFinderController(private val finder: PrimeFinder) {
         @RequestParam(name = "max") @Min(1) maxValue: Long
     ): List<Long> {
         return finder.listPrimes(minValue, maxValue)
+    }
+
+    private fun createOkResponse(message: String): ResponseEntity<PrimeNumberResponse> {
+        val response = PrimeNumberResponse(HttpStatus.OK.value(), message)
+        return ResponseEntity.ok(response)
     }
 }
 
