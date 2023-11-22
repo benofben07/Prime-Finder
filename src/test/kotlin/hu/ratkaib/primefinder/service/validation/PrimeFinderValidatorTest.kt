@@ -66,7 +66,7 @@ class PrimeFinderValidatorTest {
      */
     @Test
     fun testValidateBeforeListing() {
-        every { repository.findTopByOrderByNumberDesc() } returns Optional.of(PrimeNumber(2))
+        every { repository.findById(2L) } returns Optional.of(PrimeNumber(2))
         assertDoesNotThrow { validator.validateBeforeListing(1, 2) }
     }
 
@@ -104,7 +104,7 @@ class PrimeFinderValidatorTest {
      */
     @Test
     fun testValidateBeforeListing_InvalidArgument_TooBigInterval() {
-        every { repository.findTopByOrderByNumberDesc() } returns Optional.of(PrimeNumber(2))
+        every { repository.findById(97L) } returns Optional.empty()
         assertFailsWith(
             exceptionClass = PrimeFinderException::class,
             message = "No exception thrown with invalid input parameter for listing.",

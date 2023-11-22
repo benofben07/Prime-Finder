@@ -4,6 +4,7 @@ import hu.ratkaib.primefinder.model.PrimeNumber
 import hu.ratkaib.primefinder.service.repository.PrimeFinderRepository
 import hu.ratkaib.primefinder.service.validation.PrimeFinderValidator
 import hu.ratkaib.primefinder.util.getJobs
+import hu.ratkaib.primefinder.util.isNumberPrime
 import jakarta.annotation.PreDestroy
 import jakarta.validation.constraints.Min
 import kotlinx.coroutines.*
@@ -97,28 +98,5 @@ class PrimeFinderService(
 
             observedNumber += incrementBy * 2
         }
-    }
-
-    /**
-     * Checks if a number is prime. Negative numbers are considered non prime and won't be checked.
-     * 1 and 2 are handled as special cases, other numbers will only be checked if they have any odd divider
-     * (between 3 and the observed number's half), since the only prime number that can have an even divider is 2.
-     *
-     * @return true if a number is prime, false otherwise.
-     */
-    private fun isNumberPrime(number: Long): Boolean {
-        if (number <= 1L) {
-            return false
-        } else if (number == 2L) {
-            return true
-        }
-
-        for (i in 3L..number / 2 step 2) {
-            if (number % i == 0L) {
-                return false
-            }
-        }
-
-        return true
     }
 }
