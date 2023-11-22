@@ -15,6 +15,6 @@ class PrimeNumber() {
     }
 
     @Id
-    @Column(name = "primeNumber")
+    @Column(name = "prime_number")
     var number: Long? = null
 }

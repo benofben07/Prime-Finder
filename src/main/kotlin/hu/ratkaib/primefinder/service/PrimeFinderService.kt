@@ -3,6 +3,7 @@ package hu.ratkaib.primefinder.service
 import hu.ratkaib.primefinder.model.PrimeNumber
 import hu.ratkaib.primefinder.service.repository.PrimeFinderRepository
 import hu.ratkaib.primefinder.service.validation.PrimeFinderValidator
+import hu.ratkaib.primefinder.util.getJobs
 import jakarta.annotation.PreDestroy
 import jakarta.validation.constraints.Min
 import kotlinx.coroutines.*
@@ -54,7 +55,7 @@ class PrimeFinderService(
 
     override fun stopSearch() {
         validator.validateBeforeStoppingSearch()
-        val searcherJobs = getJobs()
+        val searcherJobs = coroutineScope.getJobs()
         coroutineScope.launch {
             searcherJobs.forEach {
                 it.cancelAndJoin()
@@ -120,6 +121,4 @@ class PrimeFinderService(
 
         return true
     }
-
-    private fun getJobs(): List<Job> = coroutineScope.coroutineContext.job.children.toList()
 }

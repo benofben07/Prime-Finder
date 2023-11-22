@@ -1,8 +1,8 @@
 package hu.ratkaib.primefinder.controller
 
 import com.ninjasquad.springmockk.MockkBean
-import hu.ratkaib.primefinder.service.PrimeFinder
 import hu.ratkaib.primefinder.model.exception.PrimeFinderException
+import hu.ratkaib.primefinder.service.PrimeFinder
 import io.mockk.every
 import io.mockk.justRun
 import org.junit.jupiter.api.Test

@@ -3,6 +3,7 @@ package hu.ratkaib.primefinder.service
 import hu.ratkaib.primefinder.model.PrimeNumber
 import hu.ratkaib.primefinder.service.repository.PrimeFinderRepository
 import hu.ratkaib.primefinder.service.validation.PrimeFinderValidator
+import hu.ratkaib.primefinder.util.getJobs
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -61,7 +62,7 @@ class PrimeFinderServiceTest {
             verify(exactly = 1) { repository.deleteAll() }
             verify(exactly = 1) { repository.save(any()) }
 
-            val jobs = getJobs()
+            val jobs = testScope.getJobs()
             assertEquals(2, jobs.size)
 
             val firstJob = jobs[0]
@@ -115,6 +116,4 @@ class PrimeFinderServiceTest {
         assertEquals(4, response.size)
         assertThat(response).hasSameElementsAs(listOf(2L, 3L, 5L, 7L))
     }
-
-    private fun getJobs() = testScope.coroutineContext.job.children.toList()
 }

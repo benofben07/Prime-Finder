@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 class PrimeFinderApplication
 
 fun main(args: Array<String>) {
-	runApplication<PrimeFinderApplication>(*args)
+    runApplication<PrimeFinderApplication>(*args)
 }

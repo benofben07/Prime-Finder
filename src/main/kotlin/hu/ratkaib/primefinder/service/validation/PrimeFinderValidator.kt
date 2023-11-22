@@ -3,9 +3,8 @@ package hu.ratkaib.primefinder.service.validation
 import hu.ratkaib.primefinder.model.PrimeNumber
 import hu.ratkaib.primefinder.model.exception.PrimeFinderException
 import hu.ratkaib.primefinder.service.repository.PrimeFinderRepository
+import hu.ratkaib.primefinder.util.getJobs
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.job
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
@@ -28,7 +27,7 @@ class PrimeFinderValidator(
             throw PrimeFinderException("Maximum threads for searching cannot be more than $maxThreadsToUse!")
         }
 
-        if (getJobs().any { it.isActive }) {
+        if (coroutineScope.getJobs().any { it.isActive }) {
             throw PrimeFinderException("Searching is already running!")
         }
     }
@@ -38,7 +37,7 @@ class PrimeFinderValidator(
      * @throws PrimeFinderException running jobs [coroutineScope] are completed already.
      */
     fun validateBeforeStoppingSearch() {
-        if (getJobs().all { it.isCompleted }) {
+        if (coroutineScope.getJobs().all { it.isCompleted }) {
             throw PrimeFinderException("Searching isn't in progress, thus cannot be stopped!")
         }
     }
@@ -57,6 +56,4 @@ class PrimeFinderValidator(
             throw PrimeFinderException("Searching hasn't finished yet on interval ($minValue) - ($maxValue)!")
         }
     }
-
-    private fun getJobs(): List<Job> = coroutineScope.coroutineContext.job.children.toList()
 }

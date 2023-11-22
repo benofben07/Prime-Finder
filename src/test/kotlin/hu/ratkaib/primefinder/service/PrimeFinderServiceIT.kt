@@ -4,23 +4,15 @@ package hu.ratkaib.primefinder.service
 import hu.ratkaib.primefinder.model.exception.PrimeFinderException
 import hu.ratkaib.primefinder.service.repository.PrimeFinderRepository
 import hu.ratkaib.primefinder.service.validation.PrimeFinderValidator
-import io.mockk.mockk
+import hu.ratkaib.primefinder.util.getJobs
 import io.mockk.unmockkAll
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
 import org.assertj.core.api.Assertions.assertThat
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.hasItems
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.context.TestConfiguration
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Import
-import org.springframework.context.annotation.Primary
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -36,7 +28,7 @@ class PrimeFinderServiceIT(
     private val dispatcher = StandardTestDispatcher()
     private val testScope = TestScope(dispatcher)
 
-    private val validator = PrimeFinderValidator(testScope, repository,  2)
+    private val validator = PrimeFinderValidator(testScope, repository, 2)
     private val primeFinder = PrimeFinderService(testScope, repository, validator, 2)
 
     @BeforeEach
@@ -60,7 +52,7 @@ class PrimeFinderServiceIT(
         assertDoesNotThrow {
             primeFinder.startSearch(1)
         }
-        val jobs = getJobs()
+        val jobs = testScope.getJobs()
         assertEquals(1, jobs.size)
         val job = jobs[0]
 
@@ -80,7 +72,7 @@ class PrimeFinderServiceIT(
         assertDoesNotThrow {
             primeFinder.startSearch(2)
         }
-        val jobs = getJobs()
+        val jobs = testScope.getJobs()
         assertEquals(2, jobs.size)
 
         val firstJob = jobs[0]
@@ -102,9 +94,9 @@ class PrimeFinderServiceIT(
      */
     @Test
     fun testListOnInterval_WhileSearchInProgress() {
-            assertDoesNotThrow {
-                primeFinder.startSearch(1)
-            }
+        assertDoesNotThrow {
+            primeFinder.startSearch(1)
+        }
 
         val result = primeFinder.listPrimes(1, 2)
         assertTrue { result.isNotEmpty() }
@@ -119,16 +111,16 @@ class PrimeFinderServiceIT(
      */
     @Test
     fun testListOnInterval_AfterSearchIsDone() {
-            assertDoesNotThrow {
-                primeFinder.startSearch(1)
-            }
+        assertDoesNotThrow {
+            primeFinder.startSearch(1)
+        }
 
-            assertDoesNotThrow {
-                primeFinder.stopSearch()
-            }
+        assertDoesNotThrow {
+            primeFinder.stopSearch()
+        }
 
-            val result = primeFinder.listPrimes(1, 2)
-            assertTrue { result.isNotEmpty()}
+        val result = primeFinder.listPrimes(1, 2)
+        assertTrue { result.isNotEmpty() }
     }
 
     /**
@@ -181,6 +173,4 @@ class PrimeFinderServiceIT(
             primeFinder.stopSearch()
         }
     }
-
-    private fun getJobs(): List<Job> = testScope.coroutineContext.job.children.toList()
 }

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository
 import java.util.*
 
 @Repository
-interface PrimeFinderRepository: JpaRepository<PrimeNumber, Long> {
+interface PrimeFinderRepository : JpaRepository<PrimeNumber, Long> {
     fun findByNumberBetween(min: Long, max: Long): List<PrimeNumber>
 
     fun findTopByOrderByNumberDesc(): Optional<PrimeNumber>

@@ -1,7 +1,7 @@
 package hu.ratkaib.primefinder.controller
 
-import hu.ratkaib.primefinder.model.response.PrimeNumberResponse
 import hu.ratkaib.primefinder.model.exception.PrimeFinderException
+import hu.ratkaib.primefinder.model.response.PrimeNumberResponse
 import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
