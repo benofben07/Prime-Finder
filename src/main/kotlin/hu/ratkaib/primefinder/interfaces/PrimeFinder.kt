@@ -1,13 +1,12 @@
 package hu.ratkaib.primefinder.interfaces
 
-import java.math.BigDecimal
-import java.math.BigInteger
+import jakarta.validation.constraints.Min
 
 interface PrimeFinder {
 
-     fun startSearch(threadsForSearchCount: Int)
+    fun startSearch(@Min(1) threadsForSearchCount: Int)
 
-     fun stopSearch()
+    fun stopSearch()
 
-     fun listPrimes(minValue: Long, maxValue: Long): List<Long>
+    fun listPrimes(@Min(1) minValue: Long, @Min(1) maxValue: Long): List<Long>
 }

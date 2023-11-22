@@ -7,20 +7,20 @@ import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/api", produces = ["application/json"])
 @Validated
 class PrimeFinderController(private val finder: PrimeFinder) {
 
     @PostMapping("/start")
     fun start(@RequestParam @Min(1) threads: Int): ResponseEntity<String> {
         finder.startSearch(threads)
-        return ResponseEntity.ok("Started")
+        return ResponseEntity.ok("Prime number searching started.")
     }
 
     @PostMapping("/stop")
     fun stop(): ResponseEntity<String> {
         finder.stopSearch()
-        return ResponseEntity.ok("Stopped")
+        return ResponseEntity.ok("Prime number searching stopped.")
     }
 
     @GetMapping("/list")
