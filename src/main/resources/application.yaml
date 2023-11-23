@@ -1,11 +1,11 @@
-maxThreadsToUse: 2
+maxThreadsToUse: 500
 
 spring:
   jpa:
     hibernate:
       ddl-auto: validate
   datasource:
-    url: jdbc:h2:mem:mydb
+    url: jdbc:h2:mem:primedb
     username: sa
     password: password
     driverClassName: org.h2.Driver

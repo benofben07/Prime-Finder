@@ -45,7 +45,7 @@ Found prime numbers are stored in memory in H2 database. To acccess the database
 Login details are stored in the property file.
 - Username: `sa`
 - Password: `password`
-- JDBC URL: `jdbc:h2:mem:mydb`
+- JDBC URL: `jdbc:h2:mem:primedb`
 
 The database consist of one table, named `PRIME_NUMBERS` which has one column named `PRIME_NUMBER` which holds all the prime numbers the application has found.
 
