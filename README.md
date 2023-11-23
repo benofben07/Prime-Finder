@@ -2,7 +2,7 @@
 
 This Spring Boot application searches for prime numbers in coroutines and lists them via REST endpoints.
 
-## Endpoints:
+## Endpoints
 OpenAPI description available after starting the application at: `http://localhost:8080/api-docs`<br/>
 SwaggerUI available after starting the application at: `http://localhost:8080/swagger-ui/index.html`
 - **Start** <br/>
